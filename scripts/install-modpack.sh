@@ -23,6 +23,11 @@ DATA_DIR=${DATA_DIR:-/data}
 MC_UID=${MC_UID:-1000}
 MC_GID=${MC_GID:-1000}
 
+# MODPACK_DIR may be a fresh subdirectory of a volume (e.g. /data/modpack on
+# Railway) rather than a bind-mounted volume root that Docker already creates
+# for us, so make sure it exists before we cd into it.
+mkdir -p "$MODPACK_DIR"
+
 # ---------------------------------------------------------------------------
 # Early‑exit if this world was already prepared
 # ---------------------------------------------------------------------------
