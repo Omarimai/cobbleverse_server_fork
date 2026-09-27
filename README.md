@@ -58,6 +58,19 @@ This repo is also deployed as a single Railway service (see [Deploying to Railwa
 
 If the modpack version installed by the Modrinth App ever drifts from what the server is running, check the `MODRINTH_URL` variable on the Railway service — it pins the exact `.mrpack` build the server installs.
 
+### Playing with a Non-Premium Account (TLauncher)
+
+The server has `ONLINE_MODE` set to `false`, so it doesn't check accounts against Mojang and accepts non-premium clients like [TLauncher](https://tlauncher.org/). Keep in mind this also means the server no longer verifies who's logging in — anyone who knows the address can join as any username, so it's meant for a trusted group of players, not a public server.
+
+TLauncher doesn't import `.mrpack` files directly, so the mods have to be placed by hand:
+
+1. In TLauncher, create/select a profile for **Minecraft 1.21.1** with **Fabric Loader 0.16.10** (TLauncher's version list lets you install a Fabric version the same way the vanilla launcher does). Launch it once so it creates the profile's folder structure, then close the game.
+2. Get the same mod files the server is running: download the modpack from the `MODRINTH_URL` set on the Railway service (currently the Cobbleverse `.mrpack` — you can also just install Cobbleverse via the [Modrinth App](https://modrinth.com/app) as in the steps above purely to fetch the files) and unzip it.
+3. Copy the contents of its `mods/` (and `resourcepacks/`, `shaderpacks/` if you want them) into that TLauncher profile's `.minecraft/mods` folder. Server-only mods don't hurt anything if included, but if you want a lighter client you only strictly need the mods that aren't purely server-side.
+4. Launch that profile from TLauncher and add the server the same way as step 3 above (**Multiplayer → Add Server** → `altaria.proxy.rlwy.net:17688`).
+
+Mod versions on the client need to match what the server has installed — if TLauncher shows a "mismatched mods" or version error on connect, double check the Fabric Loader version and that the `mods/` folder matches the pack currently at `MODRINTH_URL`.
+
 ## Deploying to Railway
 
 Railway volumes only attach to one service, so the two-container `docker-compose` split used for local dev (an installer container writing to a shared volume, then `mc` waiting on it) doesn't translate directly. The root [`Dockerfile`](Dockerfile) combines both steps into one container instead: it installs the modpack (`scripts/install-modpack.sh`) and then hands off to `itzg/minecraft-server`'s own startup script (`scripts/railway-entrypoint.sh`), all sharing one Railway volume mounted at `/data`.
@@ -69,7 +82,7 @@ Current Railway setup (project **proud-nurturing**, service **cobbleverse_server
 - **Volume**: mounted at `/data` (holds the world, mods, and the downloaded modpack under `/data/modpack`).
 - **Region**: `europe-west4` (Amsterdam / EU West).
 - **Networking**: a TCP proxy exposes container port `25565` publicly — see the address in the Joining section above, or in the Railway dashboard under this service's Networking settings.
-- **Variables**: `EULA`, `TYPE`, `VERSION`, `FABRIC_LOADER_VERSION`, `FABRIC_LAUNCHER_VERSION`, `MEMORY`, `SERVER_WORLDNAME`, `LEVEL`, `ENABLE_WHITELIST`, `DEBUG`, `SERVER_NAME`, `ALLOW_FLIGHT`, `SPAWN_MONSTERS`, `MODRINTH_URL` — same names as `.env.example`, set directly on the Railway service instead of a local `.env` file.
+- **Variables**: `EULA`, `TYPE`, `VERSION`, `FABRIC_LOADER_VERSION`, `FABRIC_LAUNCHER_VERSION`, `MEMORY`, `SERVER_WORLDNAME`, `LEVEL`, `ENABLE_WHITELIST`, `DEBUG`, `SERVER_NAME`, `ALLOW_FLIGHT`, `SPAWN_MONSTERS`, `MODRINTH_URL` — same names as `.env.example`, set directly on the Railway service instead of a local `.env` file. Also `ONLINE_MODE=false` (not in `.env.example`, itzg-specific) so non-premium clients like TLauncher can connect — see the Joining section above.
 
 A few things worth knowing if you touch this again:
 - **Java version matters.** `itzg/minecraft-server:latest` currently ships Java 25, which breaks Mixin/ASM in Fabric Loader 0.16.10 and several mods in this pack (crash-loops with "Unsupported class file major version 69"). Both the Dockerfile and `docker-compose.yml` pin `java21` explicitly — don't drop that pin without checking the modpack's Fabric/mixin versions still support whatever Java version you switch to.
