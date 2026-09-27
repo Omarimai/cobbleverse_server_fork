@@ -16,7 +16,10 @@ services:
 
 
   mc:
-    image: itzg/minecraft-server
+    # Pinned to Java 21: MC 1.21.1 + Fabric Loader 0.16.10 + this modpack's
+    # mixin versions crash on newer JDKs ("Unsupported class file major
+    # version 69" from the :latest tag's Java 25). See install-modpack.sh.
+    image: itzg/minecraft-server:java21
     environment:
       EULA: "true"
       TYPE: "FABRIC"

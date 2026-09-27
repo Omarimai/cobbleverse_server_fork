@@ -9,7 +9,11 @@
 # setup (docker-compose.yml + Dockerfile.modinstaller) — this file is not
 # used there.
 # ---------------------------------------------------------------------------
-FROM itzg/minecraft-server:latest
+# Pinned to Java 21: MC 1.21.1 + Fabric Loader 0.16.10 + this modpack's mixin
+# versions can't parse class files from newer JDKs (the itzg `latest` tag now
+# ships Java 25, which crash-loops the server with mixin transform errors --
+# "Unsupported class file major version 69").
+FROM itzg/minecraft-server:java21
 
 USER root
 
