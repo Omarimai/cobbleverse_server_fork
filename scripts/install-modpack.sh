@@ -17,7 +17,10 @@ fi
 MODPACK_DIR=${MODPACK_DIR:-/modpack}
 TEMP_DIR="$MODPACK_DIR/temp"
 MRPACK_PATH="$MODPACK_DIR/pack.mrpack"
-READY_FILE="$MODPACK_DIR/.ready-${SERVER_WORLDNAME}"
+# Keyed by MODRINTH_URL (not just world name) so bumping the modpack version
+# triggers a reinstall instead of silently reusing the previous pack's mods.
+MODRINTH_URL_HASH=$(printf '%s' "$MODRINTH_URL" | cksum | cut -d' ' -f1)
+READY_FILE="$MODPACK_DIR/.ready-${SERVER_WORLDNAME}-${MODRINTH_URL_HASH}"
 DATA_DIR=${DATA_DIR:-/data}
 
 MC_UID=${MC_UID:-1000}
