@@ -7,13 +7,18 @@ set -e
 # marks completion with a world‑specific .ready flag.
 # ---------------------------------------------------------------------------
 
-apk add --no-cache jq wget unzip rsync > /dev/null
+# On Alpine (the standalone installer container used by docker-compose) pull
+# in the tools we need. On other bases (e.g. the combined Railway image) these
+# are expected to already be installed at build time, so skip if apk is absent.
+if command -v apk >/dev/null 2>&1; then
+  apk add --no-cache jq wget unzip rsync > /dev/null
+fi
 
-MODPACK_DIR=/modpack
+MODPACK_DIR=${MODPACK_DIR:-/modpack}
 TEMP_DIR="$MODPACK_DIR/temp"
 MRPACK_PATH="$MODPACK_DIR/pack.mrpack"
 READY_FILE="$MODPACK_DIR/.ready-${SERVER_WORLDNAME}"
-DATA_DIR=/data
+DATA_DIR=${DATA_DIR:-/data}
 
 MC_UID=${MC_UID:-1000}
 MC_GID=${MC_GID:-1000}
@@ -143,8 +148,8 @@ find "$WORLD_DP" -name '.DS_Store' -delete 2>/dev/null || true
 # Permissions – cover *both* /data *and* /modpack so Fabric can read packs
 # ---------------------------------------------------------------------------
 echo "🔒 Fixing permissions to ${MC_UID}:${MC_GID} …"
-chown -R "${MC_UID}:${MC_GID}" /data /modpack
-chmod -R u+rwX,go+rX /data /modpack
+chown -R "${MC_UID}:${MC_GID}" "$DATA_DIR" "$MODPACK_DIR"
+chmod -R u+rwX,go+rX "$DATA_DIR" "$MODPACK_DIR"
 
 # ---------------------------------------------------------------------------
 # Diagnostics – optional tree snapshot
@@ -157,9 +162,17 @@ fi
 echo "🎉 Modpack install complete for world: $SERVER_WORLDNAME – $(find "$MODPACK_DIR/mods" -name '*.jar' | wc -l) mod jars ready."
 
 # --- Enable spawn‑debug on first install ------------------------------------
-CFG=/data/config/cobblemon/main.json
-jq '.exportSpawnConfig = true' "$CFG" | sponge "$CFG"
-echo "🔧   Set exportSpawnConfig=true (will generate Best‑Spawner config on first boot)"
+CFG="$DATA_DIR/config/cobblemon/main.json"
+if [ -f "$CFG" ]; then
+  if command -v sponge >/dev/null 2>&1; then
+    jq '.exportSpawnConfig = true' "$CFG" | sponge "$CFG"
+  else
+    jq '.exportSpawnConfig = true' "$CFG" > "$CFG.tmp" && mv "$CFG.tmp" "$CFG"
+  fi
+  echo "🔧   Set exportSpawnConfig=true (will generate Best‑Spawner config on first boot)"
+else
+  echo "⚠️  $CFG not found yet — skipping exportSpawnConfig tweak"
+fi
 
 
 touch "$READY_FILE"

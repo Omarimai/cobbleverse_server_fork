@@ -28,7 +28,7 @@ services:
       LEVEL: ${SERVER_WORLDNAME:-MY_COBBLEVERSE_WORLD}
       ENABLE_WHITELIST: "false"
       DEBUG: ${DEBUG:-False}
-      SERVER_NAME: ${SERVER_NAME_-Cobbleverse}
+      SERVER_NAME: ${SERVER_NAME:-Cobbleverse}
       ICON: ${SERVER_ICON:-}
       ALLOW_FLIGHT: ${ALLOW_FLIGHT:-False}
       SPAWN_MONSTERS: ${SPAWN_MONSTERS:-False}
